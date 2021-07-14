@@ -1,4 +1,4 @@
-GRequests is authored by Kenneth Reitz, maintained by Spencer Young and 
+Gevent_Requests is authored by Kenneth Reitz, maintained by Spencer Young and
 various contributors:
 
 Development Leads
@@ -34,3 +34,4 @@ Yuri Prezument <y@yprez.com>
 koobs <koobs@users.noreply.github.com>
 kracekumar <kracethekingmaker@gmail.com>
 崔庆才丨静觅 <cqc@cuiqingcai.com>
+belingud <im.victor@qq.com>

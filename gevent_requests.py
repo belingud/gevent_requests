@@ -8,7 +8,7 @@ This module contains an asynchronous replica of ``requests.api``, powered
 by gevent. All API methods return a ``Request`` instance (as opposed to
 ``Response``). A list of requests can be sent with ``map()``.
 
-A fork from grequests, grequests is not very applicable for all Python web server.
+A fork from gevent_requests, gevent_requests is not very applicable for all Python web server.
 For example, run a flask server with no thread patch ``monkey.patch_all(thread=False)``
 """
 import traceback
@@ -18,7 +18,7 @@ try:
     import gevent
     from gevent.pool import Pool
 except ImportError:
-    raise RuntimeError("Gevent is required for grequests.Install gevent by pip first.")
+    raise RuntimeError("Gevent is required for gevent_requests.Install gevent by pip first.")
 
 from requests import Session, Response
 

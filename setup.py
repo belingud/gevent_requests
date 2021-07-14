@@ -40,7 +40,7 @@ from setuptools import setup
 setup(
     name="gevent_requests",
     version="0.6.1",
-    url="https://github.com/belingud/grequests",
+    url="https://github.com/belingud/gevent_requests",
     license="BSD",
     author="Belingud",
     author_email="im.victor@qq.com",

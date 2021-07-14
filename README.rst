@@ -19,7 +19,7 @@ Usage is simple:
 
     from gevent import monkey
     monkey.patch_all(thread=False, select=False)
-    import grequests
+    import gevent_requests
 
     urls = [
         'http://www.heroku.com',
@@ -34,13 +34,13 @@ Create a set of unsent Requests:
 
 .. code-block:: python
 
-    >>> rs = (grequests.get(u) for u in urls)
+    >>> rs = (gevent_requests.get(u) for u in urls)
 
 Send them all at the same time:
 
 .. code-block:: python
 
-    >>> grequests.gmap(rs)
+    >>> gevent_requests.gmap(rs)
     [<Response [200]>, <Response [200]>, <Response [200]>, <Response [200]>, None, <Response [200]>]
 
 Optionally, in the event of a timeout or any other exception during the connection of
@@ -53,10 +53,10 @@ exception inside the main thread:
     ...    print("Request failed")
 
     >>> reqs = [
-    ...    grequests.get('http://httpbin.org/delay/1', timeout=0.001),
-    ...    grequests.get('http://fakedomain/'),
-    ...    grequests.get('http://httpbin.org/status/500')]
-    >>> grequests.gmap(reqs, exception_handler=exception_handler)
+    ...    gevent_requests.get('http://httpbin.org/delay/1', timeout=0.001),
+    ...    gevent_requests.get('http://fakedomain/'),
+    ...    gevent_requests.get('http://httpbin.org/status/500')]
+    >>> gevent_requests.gmap(reqs, exception_handler=exception_handler)
     Request failed
     Request failed
     [None, None, <Response [500]>]

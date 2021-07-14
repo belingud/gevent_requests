@@ -49,7 +49,7 @@ N = 5
 URLS = [httpbin("get?p=%s" % i) for i in range(N)]
 
 
-class TestGrequests(unittest.TestCase):
+class TestGeventRequests(unittest.TestCase):
 
     def test_gmap(self):
         reqs = [gevent_requests.get(url) for url in URLS]
