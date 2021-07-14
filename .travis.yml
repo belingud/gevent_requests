@@ -1,0 +1,26 @@
+dist: xenial
+language: python
+
+
+python:
+  - "2.7"
+  - "3.6"
+  - "3.7"
+
+
+install:
+  - pip install -r requirements_test.txt
+
+script:
+  - pytest
+
+
+deploy:
+  provider: pypi
+  distributions: "sdist bdist_wheel"
+  user: "belingud"
+  password:
+    secure: ""
+  on:
+    tags: true
+    python: 3.6
