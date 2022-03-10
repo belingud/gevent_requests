@@ -6,10 +6,6 @@ Requests easily.
 
 |version| |pyversions|
 
-
-**Note**: You should probably use `requests-threads <https://github.com/requests/requests-threads>`_ or `requests-futures <https://github.com/ross/requests-futures>`_ instead.
-
-
 Usage
 -----
 
