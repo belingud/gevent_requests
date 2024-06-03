@@ -1,0 +1,30 @@
+[project]
+name = "gevent_requests"
+version = "1.0.0"
+description = "Elegant use of requests in gevent"
+authors = [{ name = "belingud", email = "im.victor@qq.com" }]
+dependencies = ["requests", "gevent>0.8"]
+requires-python = ">=3.8"
+readme = "README.md"
+license = { text = "BSD" }
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+[tool.pdm]
+distribution = true
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "pytest>=7.4.4",
+    "black>=23.3.0",
+]
+[tool.flake8]
+ignore = "E266"
+
+[tool.pytest.ini_options]
+testpaths = "."
+python_files = "test*.py"
+python_functions = "test_*"
+python_classes = "Test*"

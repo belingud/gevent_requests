@@ -11,6 +11,7 @@ by gevent. All API methods return a ``Request`` instance (as opposed to
 A fork from gevent_requests, gevent_requests is not very applicable for all Python web server.
 For example, run a flask server with no thread patch ``monkey.patch_all(thread=False)``
 """
+import inspect
 import traceback
 from functools import wraps
 
@@ -18,13 +19,16 @@ try:
     import gevent
     from gevent.pool import Pool
 except ImportError:
-    raise RuntimeError("Gevent is required for gevent_requests.Install gevent by pip first.")
+    raise RuntimeError(
+        "Gevent is required for gevent_requests.Install gevent by pip first."
+    )
 
 from requests import Session, Response
 
 __all__ = (
     "gmap",
     "gimap",
+    "gimap_enumerate",
     "get",
     "options",
     "head",
@@ -103,6 +107,7 @@ class AsyncRequest(object):
         :param: method
         :type: str
         """
+
         @wraps(cls)
         def decorator(url, **kwargs):
             return cls(method, url, **kwargs)
@@ -111,17 +116,17 @@ class AsyncRequest(object):
 
 
 def send(r, pool=None, stream=False):
-    """Sends the request object using the specified pool. If a pool isn't
-    specified this method blocks. Pools are useful because you can specify size
-    and can hence limit concurrency.
+    """
+    Sends an asynchronous request using gevent.
 
-    :param r:
-    :type r: AsyncRequest
-    :param pool:
-    :type pool: Pool
-    :param stream:
-    :type stream: bool
-    :return: greenlet
+    Args:
+        r (AsyncRequest): The request object to send.
+        pool (Optional[Pool]): The gevent pool to use for sending the request. If not provided, a new greenlet will be created.
+        stream (bool, optional): If True, the content of the response will not be downloaded immediately. Defaults to False.
+
+    Returns:
+        gevent.Greenlet: The greenlet that will execute the request.
+
     """
     if pool is not None:
         return pool.spawn(r.send, stream=stream)
@@ -144,16 +149,57 @@ def request(method, url, **kwargs):
     return AsyncRequest(method, url, **kwargs)
 
 
-def gmap(requests, stream=False, size=None, exception_handler=None, gtimeout=None):
-    """Concurrently converts a list of Requests to Responses.
-
-    :param requests: a collection of Request objects.
-    :param stream: If True, the content will not be downloaded immediately.
-    :param size: Specifies the number of requests to make at a time. If None, no throttling occurs.
-    :param exception_handler: Callback function, called when exception occured. Params: Request, Exception
-    :param gtimeout: Gevent joinall timeout in seconds. (Note: unrelated to requests timeout)
+def is_callable_with_two_args(obj):
     """
-    assert exception_handler is None or callable(exception_handler), "exception_handler has to be a callable object"
+    Check if the given object is a callable that can be called with two arguments.
+
+    Parameters:
+        obj (Any): The object to check.
+
+    Returns:
+        bool: True if the object is callable and can be called with two arguments, False otherwise.
+    """
+    if not callable(obj):
+        return False
+    try:
+        sig = inspect.signature(obj)
+    except ValueError:
+        return False
+    postions_or_keyword_args = []
+    for param in sig.parameters.values():
+        if param.kind == param.VAR_KEYWORD:
+            return True
+        if param.kind in (param.POSITIONAL_ONLY, param.POSITIONAL_OR_KEYWORD):
+            postions_or_keyword_args.append(param)
+    return len(postions_or_keyword_args) == 2
+
+
+def gmap(requests, stream=False, size=None, exception_handler=None, gtimeout=None):
+    """
+    Executes a concurrent mapping operation on the given `requests` iterator using a gevent pool.
+
+    Args:
+        requests (Iterable[AsyncRequest]): An iterable of AsyncRequest objects representing the requests to be executed concurrently.
+        stream (bool, optional): If True, the content of the response will not be downloaded immediately. Defaults to False.
+        size (int, optional): The number of requests to make at a time. Defaults to None.
+        exception_handler (Callable[[AsyncRequest, Exception], Optional[Union[AsyncRequest, Response]]], optional):
+            A callback function that handles exceptions raised during the execution of the requests.
+            It takes the request object and the exception as parameters and returns an optional AsyncRequest or Response object.
+            Defaults to None.
+        gtimeout (float, optional): The maximum time (in seconds) that the function should wait for all requests to complete.
+            If None, there is no timeout. Defaults to None.
+
+    Returns:
+        List[Optional[Response]]: A list of response objects for each request. If an exception occurs during the execution of a request,
+            the corresponding response in the list will be None.
+
+    Raises:
+        AssertionError: If `exception_handler` is not None or callable.
+
+    """
+    assert exception_handler is None or callable(
+        exception_handler
+    ), "exception_handler has to be a callable object"
 
     requests = list(requests)
 
@@ -177,15 +223,30 @@ def gmap(requests, stream=False, size=None, exception_handler=None, gtimeout=Non
 
 
 def gimap(requests, stream=False, size=2, exception_handler=None):
-    """Concurrently converts a generator object of Requests to
-    a generator of Responses.
-
-    :param requests: a generator of Request objects.
-    :param stream: If True, the content will not be downloaded immediately.
-    :param size: Specifies the number of requests to make at a time. default is 2
-    :param exception_handler: Callback function, called when exception occurred. Params: Request, Exception
     """
+    Executes a concurrent mapping operation on the given `requests` iterator using a gevent pool.
 
+    Args:
+        requests (Iterable[AsyncRequest]): An iterable of AsyncRequest objects representing the requests to be executed concurrently.
+        stream (bool, optional): If True, the content of the response will not be downloaded immediately. Defaults to False.
+        size (int, optional): The number of requests to make at a time. Defaults to 2.
+        exception_handler (Callable[[AsyncRequest, Exception], Optional[Union[AsyncRequest, Response]]], optional):
+            A callback function that handles exceptions raised during the execution of the requests.
+            It takes the request object and the exception as parameters and returns an optional AsyncRequest or Response object.
+            Defaults to None.
+
+    Yields:
+        Union[AsyncRequest, Response]: A response object for each request.
+
+    Raises:
+        AssertionError: If `exception_handler` is not None or callable.
+
+    Returns:
+        None
+    """
+    assert exception_handler is None or callable(
+        exception_handler
+    ), "exception_handler has to be a callable object"
     pool = Pool(size)
 
     def _send(r):
@@ -198,5 +259,50 @@ def gimap(requests, stream=False, size=2, exception_handler=None):
             ex_result = exception_handler(req, req.exception)
             if ex_result is not None:
                 yield ex_result
+
+    pool.join()
+
+
+def gimap_enumerate(requests, stream=False, size=2, exception_handler=None):
+    """
+    Executes a concurrent mapping operation on the given `requests` iterator using a gevent pool.
+    The function yields a tuple of index and response for each request in the iterator.
+
+    Args:
+        requests (Iterable[Tuple[int, AsyncRequest]]): An iterable of tuples containing the index and AsyncRequest object for each request.
+        stream (bool, optional): If True, the content of the response will not be downloaded immediately. Defaults to False.
+        size (int, optional): The number of requests to make at a time. Defaults to 2.
+        exception_handler (Callable[[AsyncRequest, Exception], Optional[Union[AsyncRequest, Response]]], optional):
+            A callback function that handles exceptions raised during the execution of the requests.
+            It takes the request object and the exception as parameters and returns an optional AsyncRequest or Response object.
+            Defaults to None.
+
+    Yields:
+        Tuple[int, Union[AsyncRequest, Response]]: A tuple containing the index and response for each request.
+
+    Raises:
+        AssertionError: If `exception_handler` is not None or callable.
+
+    Returns:
+        None
+    """
+    assert exception_handler is None or callable(
+        exception_handler
+    ), "exception_handler has to be a callable object"
+    pool = Pool(size)
+
+    def _send(r):
+        # r is a tuple of (index, request)
+        return r[0], r[1].send(stream=stream)
+
+    indexed_requests = enumerate(list(requests))
+
+    for index, request in pool.imap_unordered(_send, indexed_requests):
+        if request.response is not None:
+            yield index, request.response
+        elif exception_handler:
+            ex_result = exception_handler(request, request.exception)
+            if ex_result is not None:
+                yield index, ex_result
 
     pool.join()
