@@ -9,7 +9,6 @@ gevent-requests: Asynchronous Requests
 gevent-requests allows you to use Requests with Gevent to make asynchronous HTTP
 Requests easily.
 
-**Note**: You should probably use [requests-threads](https://github.com/requests/requests-threads) or [requests-futures](https://github.com/ross/requests-futures) instead, implemented using threads.
 
 A fork from `grequests <https://github.com/spyoungtech/grequests>`.
 

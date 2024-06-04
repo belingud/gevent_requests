@@ -13,6 +13,7 @@ For example, run a flask server with no thread patch ``monkey.patch_all(thread=F
 """
 import inspect
 import traceback
+import builtins
 from functools import wraps
 
 try:
@@ -38,6 +39,8 @@ __all__ = (
     "delete",
     "request",
 )
+
+all_builtins = builtins.__dict__.values()
 
 
 class AsyncRequest(object):
@@ -159,7 +162,7 @@ def is_callable_with_two_args(obj):
     Returns:
         bool: True if the object is callable and can be called with two arguments, False otherwise.
     """
-    if not callable(obj):
+    if not callable(obj) or obj in all_builtins:
         return False
     try:
         sig = inspect.signature(obj)
@@ -197,7 +200,7 @@ def gmap(requests, stream=False, size=None, exception_handler=None, gtimeout=Non
         AssertionError: If `exception_handler` is not None or callable.
 
     """
-    assert exception_handler is None or callable(
+    assert exception_handler is None or is_callable_with_two_args(
         exception_handler
     ), "exception_handler has to be a callable object"
 
@@ -244,7 +247,7 @@ def gimap(requests, stream=False, size=2, exception_handler=None):
     Returns:
         None
     """
-    assert exception_handler is None or callable(
+    assert exception_handler is None or is_callable_with_two_args(
         exception_handler
     ), "exception_handler has to be a callable object"
     pool = Pool(size)
@@ -286,7 +289,7 @@ def gimap_enumerate(requests, stream=False, size=2, exception_handler=None):
     Returns:
         None
     """
-    assert exception_handler is None or callable(
+    assert exception_handler is None or is_callable_with_two_args(
         exception_handler
     ), "exception_handler has to be a callable object"
     pool = Pool(size)
