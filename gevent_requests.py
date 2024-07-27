@@ -11,7 +11,7 @@ by gevent. All API methods return a ``Request`` instance (as opposed to
 A fork from gevent_requests, gevent_requests is not very applicable for all Python web server.
 For example, run a flask server with no thread patch ``monkey.patch_all(thread=False)``
 """
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 
 import builtins
 import traceback
