@@ -5,7 +5,7 @@ from gevent import monkey
 
 monkey.patch_all(thread=False)
 
-from gevent_requests import get, gmap, gimap, is_callable_with_two_args
+from gevent_requests import get, gmap, gimap
 
 ########### Constants ############
 urls = ["http://gitee.com", "http://www.baidu.com", "http://www.cn.bing.com"]
@@ -227,53 +227,6 @@ class TestGeventRequests(unittest.TestCase):
 
     def get(self, url, **kwargs):
         return gevent_requests.gmap([gevent_requests.get(url, **kwargs)])[0]
-
-
-class TestIsCallableWithTwoArgs(unittest.TestCase):
-
-    def test_callable_with_two_args(self):
-        def func(arg1, arg2):
-            pass
-        self.assertTrue(is_callable_with_two_args(func))
-
-    def test_callable_with_one_arg(self):
-        def func(arg1):
-            pass
-        self.assertFalse(is_callable_with_two_args(func))
-
-    def test_callable_with_three_args(self):
-        def func(arg1, arg2, arg3):
-            pass
-        self.assertFalse(is_callable_with_two_args(func))
-
-    def test_non_callable(self):
-        self.assertFalse(is_callable_with_two_args(123))
-
-    def test_builtin_function(self):
-        self.assertFalse(is_callable_with_two_args(int))
-
-    def test_lambda_function(self):
-        self.assertTrue(is_callable_with_two_args(lambda x, y: x + y))
-
-    def test_method(self):
-        class MyClass:
-            def method(self, arg1, arg2):
-                pass
-        self.assertTrue(is_callable_with_two_args(MyClass().method))
-
-    def test_staticmethod(self):
-        class MyClass:
-            @staticmethod
-            def method(arg1, arg2):
-                pass
-        self.assertTrue(is_callable_with_two_args(MyClass.method))
-
-    def test_classmethod(self):
-        class MyClass:
-            @classmethod
-            def method(cls, arg1, arg2):
-                pass
-        self.assertTrue(is_callable_with_two_args(MyClass.method))
 
 
 if __name__ == "__main__":

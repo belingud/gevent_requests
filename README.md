@@ -3,7 +3,7 @@ gevent-requests: Asynchronous Requests
 ---
 
 
-![PyPI - License](https://img.shields.io/pypi/l/gevent-requests?style=for-the-badge) [![version](https://img.shields.io/pypi/v/gevent_requests.svg?colorB=blue&style=for-the-badge)](https://pypi.org/project/gevent-requests/) ![pyversions](https://img.shields.io/pypi/pyversions/gevent_requests.svg?style=for-the-badge) ![PyPI - Downloads](https://img.shields.io/pypi/dm/gevent-requests?style=for-the-badge)
+![PyPI - License](https://img.shields.io/pypi/l/gevent-requests?style=for-the-badge) [![version](https://img.shields.io/pypi/v/gevent_requests.svg?colorB=blue&style=for-the-badge)](https://pypi.org/project/gevent-requests/) ![pyversions](https://img.shields.io/pypi/pyversions/gevent_requests.svg?style=for-the-badge) ![PyPI - Downloads](https://img.shields.io/pypi/dm/gevent-requests?style=for-the-badge) ![Pepy Total Downlods](https://img.shields.io/pepy/dt/gevent_requests?style=for-the-badge&logo=python)
 
 
 gevent-requests allows you to use Requests with Gevent to make asynchronous HTTP

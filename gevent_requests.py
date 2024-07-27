@@ -11,9 +11,10 @@ by gevent. All API methods return a ``Request`` instance (as opposed to
 A fork from gevent_requests, gevent_requests is not very applicable for all Python web server.
 For example, run a flask server with no thread patch ``monkey.patch_all(thread=False)``
 """
-import inspect
-import traceback
+__version__ = "1.1.0"
+
 import builtins
+import traceback
 from functools import wraps
 
 try:
@@ -21,10 +22,10 @@ try:
     from gevent.pool import Pool
 except ImportError:
     raise RuntimeError(
-        "Gevent is required for gevent_requests.Install gevent by pip first."
-    )
+        "Gevent is required for gevent_requests. Install gevent by pip first."
+    ) from None
 
-from requests import Session, Response
+from requests import Session
 
 __all__ = (
     "gmap",
@@ -152,31 +153,6 @@ def request(method, url, **kwargs):
     return AsyncRequest(method, url, **kwargs)
 
 
-def is_callable_with_two_args(obj):
-    """
-    Check if the given object is a callable that can be called with two arguments.
-
-    Parameters:
-        obj (Any): The object to check.
-
-    Returns:
-        bool: True if the object is callable and can be called with two arguments, False otherwise.
-    """
-    if not callable(obj) or obj in all_builtins:
-        return False
-    try:
-        sig = inspect.signature(obj)
-    except ValueError:
-        return False
-    postions_or_keyword_args = []
-    for param in sig.parameters.values():
-        if param.kind == param.VAR_KEYWORD:
-            return True
-        if param.kind in (param.POSITIONAL_ONLY, param.POSITIONAL_OR_KEYWORD):
-            postions_or_keyword_args.append(param)
-    return len(postions_or_keyword_args) == 2
-
-
 def gmap(requests, stream=False, size=None, exception_handler=None, gtimeout=None):
     """
     Executes a concurrent mapping operation on the given `requests` iterator using a gevent pool.
@@ -200,9 +176,7 @@ def gmap(requests, stream=False, size=None, exception_handler=None, gtimeout=Non
         AssertionError: If `exception_handler` is not None or callable.
 
     """
-    assert exception_handler is None or is_callable_with_two_args(
-        exception_handler
-    ), "exception_handler has to be a callable object"
+    assert exception_handler is None or callable(exception_handler), "exception_handler has to be a callable object"
 
     requests = list(requests)
 
@@ -247,9 +221,7 @@ def gimap(requests, stream=False, size=2, exception_handler=None):
     Returns:
         None
     """
-    assert exception_handler is None or is_callable_with_two_args(
-        exception_handler
-    ), "exception_handler has to be a callable object"
+    assert exception_handler is None or callable(exception_handler), "exception_handler has to be a callable object"
     pool = Pool(size)
 
     def _send(r):
@@ -289,9 +261,7 @@ def gimap_enumerate(requests, stream=False, size=2, exception_handler=None):
     Returns:
         None
     """
-    assert exception_handler is None or is_callable_with_two_args(
-        exception_handler
-    ), "exception_handler has to be a callable object"
+    assert exception_handler is None or callable(exception_handler), "exception_handler has to be a callable object"
     pool = Pool(size)
 
     def _send(r):
@@ -300,11 +270,11 @@ def gimap_enumerate(requests, stream=False, size=2, exception_handler=None):
 
     indexed_requests = enumerate(list(requests))
 
-    for index, request in pool.imap_unordered(_send, indexed_requests):
-        if request.response is not None:
-            yield index, request.response
+    for index, req in pool.imap_unordered(_send, indexed_requests):
+        if req.response is not None:
+            yield index, req.response
         elif exception_handler:
-            ex_result = exception_handler(request, request.exception)
+            ex_result = exception_handler(req, req.exception)
             if ex_result is not None:
                 yield index, ex_result
 
