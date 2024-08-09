@@ -47,7 +47,6 @@ URLS = [httpbin("get?p=%s" % i) for i in range(N)]
 
 
 class TestGeventRequests(unittest.TestCase):
-
     def test_gmap(self):
         reqs = [gevent_requests.get(url) for url in URLS]
         resp = gevent_requests.gmap(reqs, size=N)
@@ -110,7 +109,9 @@ class TestGeventRequests(unittest.TestCase):
         self.assertEqual([int(r.json()["form"]["p"]) for r in resp], list(range(N)))
 
     def test_stream_enabled(self):
-        r = gevent_requests.gmap([gevent_requests.get(httpbin("stream/10"))], size=2, stream=True)[0]
+        r = gevent_requests.gmap([gevent_requests.get(httpbin("stream/10"))], size=2, stream=True)[
+            0
+        ]
         self.assertFalse(r._content_consumed)
 
     def test_concurrency_with_delayed_url(self):
@@ -124,7 +125,10 @@ class TestGeventRequests(unittest.TestCase):
         """
         compliance with existing 0.2.0 behaviour
         """
-        reqs = [gevent_requests.get(httpbin("delay/1"), timeout=0.001), gevent_requests.get(httpbin("/"))]
+        reqs = [
+            gevent_requests.get(httpbin("delay/1"), timeout=0.001),
+            gevent_requests.get(httpbin("/")),
+        ]
         responses = gevent_requests.gmap(reqs)
         self.assertIsNone(responses[0])
         self.assertTrue(responses[1].ok)
@@ -138,7 +142,10 @@ class TestGeventRequests(unittest.TestCase):
         def exception_handler(request, exception):
             pass
 
-        reqs = [gevent_requests.get(httpbin("delay/1"), timeout=0.001), gevent_requests.get(httpbin("/"))]
+        reqs = [
+            gevent_requests.get(httpbin("delay/1"), timeout=0.001),
+            gevent_requests.get(httpbin("/")),
+        ]
         responses = gevent_requests.gmap(reqs, exception_handler=exception_handler)
         self.assertIsNone(responses[0])
         self.assertTrue(responses[1].ok)
@@ -152,7 +159,10 @@ class TestGeventRequests(unittest.TestCase):
         def exception_handler(request, exception):
             return exception
 
-        reqs = [gevent_requests.get(httpbin("delay/1"), timeout=0.001), gevent_requests.get(httpbin("/"))]
+        reqs = [
+            gevent_requests.get(httpbin("delay/1"), timeout=0.001),
+            gevent_requests.get(httpbin("/")),
+        ]
         responses = gevent_requests.gmap(reqs, exception_handler=exception_handler)
         self.assertIsInstance(responses[0], Timeout)
         self.assertTrue(responses[1].ok)
@@ -224,6 +234,21 @@ class TestGeventRequests(unittest.TestCase):
         reqs = [gevent_requests.get(httpbin("delay/1"), timeout=0.001)]
         list(gevent_requests.gimap(reqs, exception_handler=eh.callback))
         self.assertEqual(eh.counter, 1)
+
+    def test_gimap_exception_handler_type_error(self):
+        reqs = [gevent_requests.get(URLS[0])]
+        with self.assertRaises(TypeError):
+            list(gevent_requests.gimap(reqs, exception_handler="error handler"))
+
+    def test_gmap_exception_handler_type_error(self):
+        reqs = [gevent_requests.get(URLS[0])]
+        with self.assertRaises(TypeError):
+            list(gevent_requests.gmap(reqs, exception_handler="error handler"))
+
+    def test_gimap_enumerate_exception_handler_type_error(self):
+        reqs = [gevent_requests.get(URLS[0])]
+        with self.assertRaises(TypeError):
+            list(gevent_requests.gimap_enumerate(reqs, exception_handler="error handler"))
 
     def get(self, url, **kwargs):
         return gevent_requests.gmap([gevent_requests.get(url, **kwargs)])[0]

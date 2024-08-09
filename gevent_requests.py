@@ -11,7 +11,8 @@ by gevent. All API methods return a ``Request`` instance (as opposed to
 A fork from gevent_requests, gevent_requests is not very applicable for all Python web server.
 For example, run a flask server with no thread patch ``monkey.patch_all(thread=False)``
 """
-__version__ = "1.1.1"
+
+__version__ = "1.1.2"
 
 import builtins
 import traceback
@@ -43,6 +44,8 @@ __all__ = (
 
 all_builtins = builtins.__dict__.values()
 
+EXCEPTION_HANDLER_TYPE_ERROR = "exception_handler is not callable, got type: {}"
+
 
 class AsyncRequest(object):
     """Asynchronous request.
@@ -67,7 +70,8 @@ class AsyncRequest(object):
             self.session = Session()
             self._close = True
         else:
-            self._close = False  # don't close adapters after each request if the user provided the session
+            # don't close adapters after each request if the user provided the session
+            self._close = False
 
         callback = kwargs.pop("callback", None)
         if callback:
@@ -173,11 +177,11 @@ def gmap(requests, stream=False, size=None, exception_handler=None, gtimeout=Non
             the corresponding response in the list will be None.
 
     Raises:
-        AssertionError: If `exception_handler` is not None or callable.
+        TypeError: If `exception_handler` is not None or callable.
 
     """
-    assert exception_handler is None or callable(exception_handler), "exception_handler has to be a callable object"
-
+    if exception_handler and not callable(exception_handler):
+        raise TypeError(EXCEPTION_HANDLER_TYPE_ERROR.format(type(exception_handler)))
     requests = list(requests)
 
     pool = Pool(size) if size else None
@@ -216,12 +220,13 @@ def gimap(requests, stream=False, size=2, exception_handler=None):
         Union[AsyncRequest, Response]: A response object for each request.
 
     Raises:
-        AssertionError: If `exception_handler` is not None or callable.
+        TypeError: If `exception_handler` is not None or callable.
 
     Returns:
         None
     """
-    assert exception_handler is None or callable(exception_handler), "exception_handler has to be a callable object"
+    if exception_handler and not callable(exception_handler):
+        raise TypeError(EXCEPTION_HANDLER_TYPE_ERROR.format(type(exception_handler)))
     pool = Pool(size)
 
     def _send(r):
@@ -256,12 +261,13 @@ def gimap_enumerate(requests, stream=False, size=2, exception_handler=None):
         Tuple[int, Union[AsyncRequest, Response]]: A tuple containing the index and response for each request.
 
     Raises:
-        AssertionError: If `exception_handler` is not None or callable.
+        TypeError: If `exception_handler` is not None or callable.
 
     Returns:
         None
     """
-    assert exception_handler is None or callable(exception_handler), "exception_handler has to be a callable object"
+    if exception_handler and not callable(exception_handler):
+        raise TypeError(EXCEPTION_HANDLER_TYPE_ERROR.format(type(exception_handler)))
     pool = Pool(size)
 
     def _send(r):
